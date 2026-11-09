@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertBell } from "./alert-bell";
 import { DemoReset } from "./demo-reset";
+import { openTour } from "./guided-tour";
 
 const NAV = [
   { href: "/", label: "Panel de control", icon: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" },
@@ -49,6 +50,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              data-tour={item.href === "/" ? "nav-panel" : `nav-${item.href.slice(1)}`}
               className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors md:gap-3 ${
                 active ? "bg-slate-800 text-white" : "hover:bg-slate-800/60 hover:text-white"
               }`}
@@ -61,9 +63,20 @@ export function Sidebar() {
             </Link>
           );
         })}
+        <button
+          type="button"
+          onClick={openTour}
+          className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-800/60 hover:text-white md:gap-3"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 fill-current" aria-hidden>
+            <path d="M12 2a10 10 0 1 0 .01 20.01A10 10 0 0 0 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+          </svg>
+          Recorrido
+        </button>
       </nav>
       <div className="mt-auto hidden px-5 py-4 text-xs text-slate-500 md:block">
         200 equipos · 6 líneas
+        <p className="mt-1 text-slate-500">Los cambios se guardan en este navegador.</p>
         <DemoReset />
       </div>
     </aside>

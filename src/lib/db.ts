@@ -2,6 +2,7 @@ import "server-only";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { isAhead } from "./client-db";
 import { migrateDb } from "./migrate-db";
 import { createSeed } from "./seed";
 import type { Db } from "./types";
@@ -61,23 +62,55 @@ export function readDb(): Promise<Db> {
   return exclusive(load);
 }
 
-export function updateDb<T>(fn: (db: Db) => T): Promise<T> {
+function failedMutation(result: unknown) {
+  return (
+    result == null ||
+    (typeof result === "object" && result !== null && "error" in result && !("wo" in result))
+  );
+}
+
+export function updateDb<T>(fn: (db: Db) => T, clientState?: Db | null): Promise<{ result: T; db: Db }> {
   return exclusive(async () => {
-    const db = await load();
+    let db = await load();
+    const adopted = Boolean(clientState && isAhead(clientState, db));
+    if (adopted && clientState) db = migrateDb(structuredClone(clientState));
     const result = fn(db);
+    if (!failedMutation(result)) db.revision = (db.revision ?? 1) + 1;
+    if (!failedMutation(result) || adopted) {
+      try {
+        const { dir, file } = resolveDataPaths();
+        await save(db, dir, file);
+      } catch {
+        memoryDb = db;
+      }
+    }
+    return { result, db: structuredClone(db) };
+  });
+}
+
+/** Sustituye la base solo si el navegador trae una época o revisión más nueva. */
+export function replaceIfAhead(incoming: Db): Promise<Db> {
+  return exclusive(async () => {
+    const current = await load();
+    if (!isAhead(incoming, current)) return current;
+    const db = migrateDb(structuredClone(incoming));
     try {
       const { dir, file } = resolveDataPaths();
       await save(db, dir, file);
     } catch {
       memoryDb = db;
     }
-    return result;
+    return db;
   });
 }
 
-export function resetDb(): Promise<Db> {
+export function resetDb(clientEpoch?: number): Promise<Db> {
   return exclusive(async () => {
+    const current = await load();
     const db = createSeed();
+    const fromClient = typeof clientEpoch === "number" && clientEpoch >= 1 ? Math.floor(clientEpoch) : 1;
+    db.epoch = Math.max(current.epoch ?? 1, fromClient) + 1;
+    db.revision = 1;
     memoryDb = null;
     try {
       const { dir, file } = resolveDataPaths();

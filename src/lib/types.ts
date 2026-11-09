@@ -85,6 +85,10 @@ export type WorkOrder = {
 
 export type Db = {
   createdAt: string;
+  /** Sube al reiniciar la demo. Gana sobre cualquier revisión anterior. */
+  epoch: number;
+  /** Sube con cada cambio dentro de la misma época. */
+  revision: number;
   machines: Machine[];
   technicians: Technician[];
   workOrders: WorkOrder[];
