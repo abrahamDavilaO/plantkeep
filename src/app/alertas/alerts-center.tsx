@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CardMetaGrid, CardMetaRow, ListCard } from "@/components/list-cards";
 import { Badge, Card, Loading, PageHeader } from "@/components/ui";
 import { ALERT_KIND_LABEL, ALERT_SEVERITY_STYLE } from "@/lib/alert-labels";
@@ -10,12 +10,13 @@ import { usePlant } from "@/lib/use-plant";
 
 export function AlertsCenter() {
   const { data, error, refresh } = usePlant(10_000);
-  const [notifyOn, setNotifyOn] = useState(() =>
-    typeof window === "undefined" ? false : localStorage.getItem("plantkeep.notify") === "1",
-  );
-  const [soundOn, setSoundOn] = useState(() =>
-    typeof window === "undefined" ? false : localStorage.getItem("plantkeep.alertSound") === "1",
-  );
+  const [notifyOn, setNotifyOn] = useState(false);
+  const [soundOn, setSoundOn] = useState(false);
+
+  useEffect(() => {
+    setNotifyOn(localStorage.getItem("plantkeep.notify") === "1");
+    setSoundOn(localStorage.getItem("plantkeep.alertSound") === "1");
+  }, []);
 
   if (!data) return <Loading error={error} />;
 

@@ -99,11 +99,11 @@ export function WorkOrders({ initialOrderId }: { initialOrderId: string | null }
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar OT, equipo o línea"
-          className="ml-auto w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-orange-500 sm:w-64"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-orange-500 sm:ml-auto sm:w-64"
         />
       </div>
 
-      <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+      <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 min-[1680px]:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0">
         <div className="space-y-2 md:hidden">
           {orders.map((w) => {
@@ -135,16 +135,16 @@ export function WorkOrders({ initialOrderId }: { initialOrderId: string | null }
           )}
         </div>
 
-        <Card className="hidden min-w-0 max-w-full overflow-x-auto p-0 md:block">
-          <table className="w-full min-w-0 text-left text-sm md:min-w-[640px]">
+        <Card className="hidden min-w-0 max-w-full overflow-hidden p-0 md:block">
+          <table className="w-full table-fixed text-left text-sm">
             <thead className="border-b border-slate-200 text-xs uppercase text-slate-400">
               <tr>
-                <th className="px-4 py-3 font-medium">OT</th>
-                <th className="min-w-[8rem] font-medium">Equipo</th>
-                <th className="font-medium">Prioridad</th>
-                <th className="font-medium">Estado</th>
-                <th className="hidden font-medium lg:table-cell 2xl:hidden">Responsable</th>
-                <th className="hidden px-4 text-right font-medium lg:table-cell 2xl:hidden">Reportada</th>
+                <th className="w-24 px-4 py-3 font-medium">OT</th>
+                <th className="px-3 font-medium">Equipo</th>
+                <th className="w-28 px-2 font-medium">Prioridad</th>
+                <th className="w-32 px-2 font-medium">Estado</th>
+                <th className="hidden w-36 px-2 font-medium lg:table-cell min-[1680px]:hidden">Responsable</th>
+                <th className="hidden w-36 px-4 text-right font-medium xl:table-cell min-[1680px]:hidden">Reportada</th>
               </tr>
             </thead>
             <tbody>
@@ -157,14 +157,14 @@ export function WorkOrders({ initialOrderId }: { initialOrderId: string | null }
                     className={`cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 ${selectedId === w.id ? "bg-orange-50" : ""}`}
                   >
                     <td className="px-4 py-3 font-mono text-xs">{w.id}</td>
-                    <td>
-                      <p className="font-medium text-slate-900">{m?.name}</p>
-                      <p className="text-xs text-slate-500">{CATEGORY_LABEL[w.category]} · {w.description}</p>
+                    <td className="min-w-0 overflow-hidden px-3 py-3">
+                      <p className="truncate font-medium text-slate-900">{m?.name}</p>
+                      <p className="truncate text-xs text-slate-500">{CATEGORY_LABEL[w.category]} · {w.description}</p>
                     </td>
-                    <td><Badge className={PRIORITY_STYLE[w.priority]}>{PRIORITY_LABEL[w.priority]}</Badge></td>
-                    <td><Badge className={STATUS_STYLE[w.status]}>{STATUS_LABEL[w.status]}</Badge></td>
-                    <td className="hidden text-slate-600 lg:table-cell 2xl:hidden">{w.technicianId ? techById.get(w.technicianId)?.name : "—"}</td>
-                    <td className="hidden px-4 text-right text-xs text-slate-500 lg:table-cell 2xl:hidden">{formatDateTime(w.reportedAt)}</td>
+                    <td className="whitespace-nowrap px-2"><Badge className={PRIORITY_STYLE[w.priority]}>{PRIORITY_LABEL[w.priority]}</Badge></td>
+                    <td className="whitespace-nowrap px-2"><Badge className={STATUS_STYLE[w.status]}>{STATUS_LABEL[w.status]}</Badge></td>
+                    <td className="hidden truncate px-2 text-slate-600 lg:table-cell min-[1680px]:hidden">{w.technicianId ? techById.get(w.technicianId)?.name : "—"}</td>
+                    <td className="hidden truncate px-4 text-right text-xs text-slate-500 xl:table-cell min-[1680px]:hidden">{formatDateTime(w.reportedAt)}</td>
                   </tr>
                 );
               })}
@@ -184,11 +184,11 @@ export function WorkOrders({ initialOrderId }: { initialOrderId: string | null }
         )}
         </div>
 
-        <div className="min-w-0 2xl:min-w-[26rem]">
+        <div className="min-w-0 min-[1680px]:sticky min-[1680px]:top-8 min-[1680px]:w-[22rem]">
           {selected ? (
             <OrderDetail key={selected.id} wo={selected} data={data} onChange={refresh} />
           ) : (
-            <Card className="hidden h-fit w-full text-sm text-slate-500 md:block 2xl:sticky 2xl:top-8">
+            <Card className="hidden h-fit w-full text-sm text-slate-500 md:block">
               Selecciona una orden en la tabla para ver el detalle y asignar técnico.
             </Card>
           )}
@@ -229,7 +229,7 @@ function OrderDetail({ wo, data, onChange }: { wo: WorkOrder; data: PlantState; 
   ] as const;
 
   return (
-    <Card className="h-fit w-full min-w-0 max-w-full overflow-visible 2xl:sticky 2xl:top-8">
+    <Card className="h-fit w-full min-w-0 max-w-full overflow-visible">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="font-mono text-xs text-slate-500">{wo.id}</p>
