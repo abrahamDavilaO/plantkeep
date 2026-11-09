@@ -49,3 +49,7 @@ No implementada en esta versión; la app funciona de forma autónoma. Cuando hag
 
 - El proyecto usa **Tailwind CSS v3** con webpack (`next dev --webpack` / `next build --webpack`) por compatibilidad con la versión actual de Node en este entorno.
 - El comando `npm run build` ya incluye `--webpack`.
+
+## Vercel
+
+En local los datos están en `data/db.json`. En **Vercel** el código no puede escribir en la carpeta del proyecto; la app guarda en **`/tmp`** (datos de demostración, pueden reiniciarse en un cold start). Si necesitas persistencia real en producción, conviene Postgres, Vercel KV o similar.

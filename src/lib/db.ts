@@ -1,40 +1,56 @@
 import "server-only";
 import { promises as fs } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { migrateDb } from "./migrate-db";
 import { createSeed } from "./seed";
 import type { Db } from "./types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_FILE = path.join(DATA_DIR, "db.json");
+/** En Vercel el disco del proyecto es solo lectura; los datos viven en /tmp (efímeros por instancia). */
+function resolveDataPaths() {
+  const base =
+    process.env.VERCEL === "1"
+      ? path.join(os.tmpdir(), "plantkeep-data")
+      : path.join(process.cwd(), "data");
+  return { dir: base, file: path.join(base, "db.json") };
+}
 
+let memoryDb: Db | null = null;
 let queue: Promise<unknown> = Promise.resolve();
 
 async function load(): Promise<Db> {
+  if (memoryDb) return migrateDb(memoryDb);
+
+  const { dir, file } = resolveDataPaths();
+
   try {
-    const raw = JSON.parse(await fs.readFile(DB_FILE, "utf8")) as Db;
+    const raw = JSON.parse(await fs.readFile(file, "utf8")) as Db;
     const db = migrateDb(raw);
     const dirty =
       !raw.preventivePlans?.length ||
       !raw.counters?.technician ||
       raw.technicians.some((t, i) => !t.email && db.technicians[i]?.email);
-    if (dirty) await save(db);
+    if (dirty) await save(db, dir, file);
     return db;
   } catch {
     const db = createSeed();
-    await save(db);
-    return db;
+    try {
+      await save(db, dir, file);
+    } catch {
+      memoryDb = db;
+    }
+    return migrateDb(db);
   }
 }
 
-async function save(db: Db) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  const tmp = `${DB_FILE}.tmp`;
+async function save(db: Db, dir = resolveDataPaths().dir, file = resolveDataPaths().file) {
+  await fs.mkdir(dir, { recursive: true });
+  const tmp = `${file}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(db, null, 2));
-  await fs.rename(tmp, DB_FILE);
+  await fs.rename(tmp, file);
+  if (memoryDb) memoryDb = db;
 }
 
-/** Serializa lecturas/escrituras para que reportes simultáneos desde varias tablets no se pisen. */
 function exclusive<T>(fn: () => Promise<T>): Promise<T> {
   const run = queue.then(fn, fn);
   queue = run.catch(() => undefined);
@@ -49,7 +65,12 @@ export function updateDb<T>(fn: (db: Db) => T): Promise<T> {
   return exclusive(async () => {
     const db = await load();
     const result = fn(db);
-    await save(db);
+    try {
+      const { dir, file } = resolveDataPaths();
+      await save(db, dir, file);
+    } catch {
+      memoryDb = db;
+    }
     return result;
   });
 }
@@ -57,7 +78,13 @@ export function updateDb<T>(fn: (db: Db) => T): Promise<T> {
 export function resetDb(): Promise<Db> {
   return exclusive(async () => {
     const db = createSeed();
-    await save(db);
-    return db;
+    memoryDb = null;
+    try {
+      const { dir, file } = resolveDataPaths();
+      await save(db, dir, file);
+    } catch {
+      memoryDb = db;
+    }
+    return migrateDb(db);
   });
 }
