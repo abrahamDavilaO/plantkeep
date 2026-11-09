@@ -166,7 +166,7 @@ export function GuidedTour() {
   if (!open) return null;
 
   const current = STEPS[step];
-  const card = typeof window === "undefined" ? { top: 24, left: 24, width: 352 } : placeCard(spot);
+  const card = placeCard(spot);
   const last = step === STEPS.length - 1;
 
   return (
