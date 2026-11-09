@@ -11,6 +11,7 @@ export function AlertBell() {
   return (
     <Link
       href="/alertas"
+      data-tour="alertas"
       className="relative flex items-center gap-2 rounded-lg bg-slate-800/80 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 hover:text-white"
       title="Centro de alertas"
     >

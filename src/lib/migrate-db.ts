@@ -41,6 +41,8 @@ export function createDefaultPreventivePlans(
 }
 
 export function migrateDb(db: Db, now = Date.now()): Db {
+  db.epoch = typeof db.epoch === "number" && db.epoch >= 1 ? Math.floor(db.epoch) : 1;
+  db.revision = typeof db.revision === "number" && db.revision >= 1 ? Math.floor(db.revision) : 1;
   db.preventivePlans ??= [];
   db.counters ??= { workOrder: 1000, technician: db.technicians.length, preventive: 100 };
   db.counters.technician ??= db.technicians.length;

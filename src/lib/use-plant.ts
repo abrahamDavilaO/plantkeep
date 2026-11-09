@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Db, PlantAlert } from "./types";
+import { hydrate, publishPlant, readStoredDb, subscribePlant, syncPlant, type PlantState } from "./plant-cache";
 
-export type PlantState = Db & { now: number; alerts: PlantAlert[] };
+export type { PlantState };
 
 export function usePlant(refreshMs = 10_000) {
   const [data, setData] = useState<PlantState | null>(null);
@@ -11,9 +11,7 @@ export function usePlant(refreshMs = 10_000) {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`/api/state?_=${Date.now()}`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setData(await res.json());
+      await syncPlant();
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error de conexión");
@@ -21,36 +19,21 @@ export function usePlant(refreshMs = 10_000) {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    const cached = readStoredDb();
+    if (cached) setData(hydrate(cached));
+    const unsubscribe = subscribePlant((state) => {
+      setData(state);
+      setError(null);
+    });
     const onVisible = () => {
       if (document.visibilityState === "visible") void refresh();
     };
     document.addEventListener("visibilitychange", onVisible);
-    void (async () => {
-      try {
-        const res = await fetch(`/api/state?_=${Date.now()}`, { cache: "no-store" });
-        if (!res.ok || cancelled) return;
-        setData(await res.json());
-        setError(null);
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Error de conexión");
-      }
-    })();
-    const t = setInterval(() => {
-      void (async () => {
-        try {
-          const res = await fetch(`/api/state?_=${Date.now()}`, { cache: "no-store" });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          setData(await res.json());
-          setError(null);
-        } catch (e) {
-          setError(e instanceof Error ? e.message : "Error de conexión");
-        }
-      })();
-    }, refreshMs);
+    void refresh();
+    const timer = setInterval(() => void refresh(), refreshMs);
     return () => {
-      cancelled = true;
-      clearInterval(t);
+      unsubscribe();
+      clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refreshMs, refresh]);
@@ -58,13 +41,18 @@ export function usePlant(refreshMs = 10_000) {
   return { data, error, refresh };
 }
 
-export async function api<T = unknown>(url: string, method: "POST" | "PATCH", body?: unknown): Promise<T> {
+export async function api<T = unknown>(url: string, method: "POST" | "PATCH", body?: Record<string, unknown>): Promise<T> {
+  const clientState = readStoredDb();
   const res = await fetch(url, {
     method,
     headers: { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: JSON.stringify({ ...(body ?? {}), ...(clientState ? { clientState } : {}) }),
   });
-  const json = await res.json().catch(() => ({}));
+  const json = (await res.json().catch(() => ({}))) as T & { error?: string; state?: PlantState };
   if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-  return json as T;
+  if (json && typeof json === "object" && "state" in json && json.state) {
+    publishPlant(json.state);
+    delete json.state;
+  }
+  return json;
 }

@@ -1,4 +1,6 @@
 import { updateDb } from "@/lib/db";
+import { plantPayload } from "@/lib/plant-payload";
+import { readBody } from "@/lib/request-body";
 
 type Action =
   | { action: "assign"; technicianId: string }
@@ -7,10 +9,11 @@ type Action =
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await request.json().catch(() => null)) as Action | null;
+  const { body: raw, clientState } = await readBody(request);
+  const body = raw as Action | null;
   if (!body) return Response.json({ error: "Solicitud inválida" }, { status: 400 });
 
-  const result = await updateDb((db) => {
+  const { result, db } = await updateDb((db) => {
     const wo = db.workOrders.find((w) => w.id === id);
     if (!wo) return { error: "Orden no encontrada", status: 404 } as const;
     const now = new Date().toISOString();
@@ -44,8 +47,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return { error: "Acción desconocida", status: 400 } as const;
     }
     return { wo };
-  });
+  }, clientState);
 
   if ("error" in result) return Response.json({ error: result.error }, { status: result.status });
-  return Response.json(result.wo);
+  return Response.json({ ...result.wo, state: plantPayload(db) });
 }

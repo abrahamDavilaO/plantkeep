@@ -180,6 +180,8 @@ export function createSeed(now = Date.now()): Db {
 
   return {
     createdAt: new Date(now).toISOString(),
+    epoch: 1,
+    revision: 1,
     machines,
     technicians: TECHNICIANS,
     workOrders,
