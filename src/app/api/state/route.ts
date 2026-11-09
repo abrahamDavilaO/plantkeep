@@ -4,8 +4,6 @@ import { buildPlantAlerts } from "@/lib/alerts";
 
 const NO_STORE = { "Cache-Control": "no-store, max-age=0" };
 
-export const runtime = "nodejs";
-
 export async function GET() {
   await connection();
   try {
