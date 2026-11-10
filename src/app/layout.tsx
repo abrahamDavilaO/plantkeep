@@ -19,11 +19,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PlantKeep · Mantenimiento de planta",
   description: "Reporte de fallas, órdenes de mantenimiento y disponibilidad de equipos.",
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "PlantKeep", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
