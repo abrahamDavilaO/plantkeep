@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { ReadOnlyNote, useEditAccess } from "@/components/edit-access";
 import { Badge, Card, Loading, PageHeader } from "@/components/ui";
 import { ALERT_KIND_LABEL, ALERT_SEVERITY_STYLE } from "@/lib/alert-labels";
 import { formatDateTime } from "@/lib/metrics";
@@ -27,6 +28,7 @@ function monthMatrix(year: number, month: number) {
 
 export function PreventiveView() {
   const { data, error, refresh } = usePlant(15_000);
+  const { canEdit } = useEditAccess();
   const [viewYear, setViewYear] = useState<number | null>(null);
   const [viewMonth, setViewMonth] = useState<number | null>(null);
   const [machineId, setMachineId] = useState("");
@@ -292,7 +294,8 @@ export function PreventiveView() {
                 ))}
               </div>
             </fieldset>
-            <button type="submit" disabled={busy} className="w-full rounded-lg bg-orange-500 py-2.5 font-medium text-white hover:bg-orange-600 disabled:bg-slate-300">
+            <ReadOnlyNote />
+            <button type="submit" disabled={!canEdit || busy} className="w-full rounded-lg bg-orange-500 py-2.5 font-medium text-white hover:bg-orange-600 disabled:bg-slate-300">
               Programar
             </button>
           </form>
@@ -317,7 +320,7 @@ export function PreventiveView() {
                     <span className="text-slate-500"> · {m?.name}</span>
                     <p className="text-xs text-slate-500">{formatDateTime(p.nextDueAt)} · cada {p.intervalDays} días</p>
                   </div>
-                  <button type="button" disabled={busy} onClick={() => completePlan(p.id)} className="rounded-lg border border-slate-300 px-3 py-1 text-xs hover:bg-slate-50">
+                  <button type="button" disabled={!canEdit || busy} onClick={() => completePlan(p.id)} className="rounded-lg border border-slate-300 px-3 py-1 text-xs hover:bg-slate-50 disabled:opacity-50">
                     Completar
                   </button>
                 </li>

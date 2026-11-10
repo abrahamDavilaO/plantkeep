@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CardMetaGrid, CardMetaRow, ListCard } from "@/components/list-cards";
+import { ReadOnlyNote, useEditAccess } from "@/components/edit-access";
 import { Card, Loading, PageHeader } from "@/components/ui";
 import { api, usePlant } from "@/lib/use-plant";
 
@@ -9,6 +10,7 @@ const SHIFTS = ["Matutino", "Vespertino", "Nocturno"] as const;
 
 export function TechniciansView() {
   const { data, error, refresh } = usePlant();
+  const { canEdit } = useEditAccess();
   const [name, setName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [shift, setShift] = useState<(typeof SHIFTS)[number]>("Matutino");
@@ -140,9 +142,10 @@ export function TechniciansView() {
               />
             </label>
             {formError && <p className="text-red-600">{formError}</p>}
+            <ReadOnlyNote />
             <button
               type="submit"
-              disabled={busy}
+              disabled={!canEdit || busy}
               className="w-full rounded-lg bg-orange-500 py-2.5 font-medium text-white hover:bg-orange-600 disabled:bg-slate-300"
             >
               {busy ? "Guardando…" : "Registrar técnico"}

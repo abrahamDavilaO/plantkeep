@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { parseClientDb } from "@/lib/client-db";
 import { readDb, replaceIfAhead } from "@/lib/db";
+import { rejectIfCannotEdit } from "@/lib/edit-guard";
 import { plantPayload } from "@/lib/plant-payload";
 
 const NO_STORE = { "Cache-Control": "no-store, max-age=0" };
@@ -18,6 +19,8 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   await connection();
+  const denied = rejectIfCannotEdit(request);
+  if (denied) return denied;
   try {
     const incoming = parseClientDb(await request.json().catch(() => null));
     if (!incoming) return Response.json({ error: "Estado de demo inválido" }, { status: 400, headers: NO_STORE });

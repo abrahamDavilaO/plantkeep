@@ -2,6 +2,7 @@
 
 import { buildPlantAlerts } from "./alerts";
 import { isAhead, parseClientDb } from "./client-db";
+import { editHeaders } from "./edit-session";
 import type { Db, PlantAlert } from "./types";
 
 const STORAGE_KEY = "plantkeep-demo-v1";
@@ -63,10 +64,14 @@ async function pullServer(): Promise<void> {
     const beforePut = generation;
     const put = await fetch("/api/state", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...editHeaders() },
       body: JSON.stringify(local),
     });
     if (generation !== beforePut) return;
+    if (put.status === 401) {
+      publishPlant(server);
+      return;
+    }
     if (!put.ok) throw new Error(`HTTP ${put.status}`);
     publishPlant((await put.json()) as PlantState);
     return;

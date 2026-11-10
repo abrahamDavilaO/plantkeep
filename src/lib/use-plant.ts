@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { editHeaders } from "./edit-session";
 import { hydrate, publishPlant, readStoredDb, subscribePlant, syncPlant, type PlantState } from "./plant-cache";
 
 export type { PlantState };
@@ -45,7 +46,7 @@ export async function api<T = unknown>(url: string, method: "POST" | "PATCH", bo
   const clientState = readStoredDb();
   const res = await fetch(url, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...editHeaders() },
     body: JSON.stringify({ ...(body ?? {}), ...(clientState ? { clientState } : {}) }),
   });
   const json = (await res.json().catch(() => ({}))) as T & { error?: string; state?: PlantState };

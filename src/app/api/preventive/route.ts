@@ -1,9 +1,12 @@
 import { updateDb } from "@/lib/db";
+import { rejectIfCannotEdit } from "@/lib/edit-guard";
 import { plantPayload } from "@/lib/plant-payload";
 import { readBody } from "@/lib/request-body";
 import type { PreventivePlan } from "@/lib/types";
 
 export async function POST(request: Request) {
+  const denied = rejectIfCannotEdit(request);
+  if (denied) return denied;
   const { body, clientState } = await readBody(request);
   if (
     !body ||

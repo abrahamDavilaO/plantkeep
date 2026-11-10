@@ -1,9 +1,12 @@
 import { updateDb } from "@/lib/db";
+import { rejectIfCannotEdit } from "@/lib/edit-guard";
 import { completePreventivePlan } from "@/lib/preventive";
 import { plantPayload } from "@/lib/plant-payload";
 import { readBody } from "@/lib/request-body";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const denied = rejectIfCannotEdit(request);
+  if (denied) return denied;
   const { id } = await params;
   const { body, clientState } = await readBody(request);
   if (body?.action !== "complete") {
