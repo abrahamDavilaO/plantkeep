@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEditAccess } from "@/components/edit-access";
+import { editHeaders } from "@/lib/edit-session";
 import { publishPlant, readStoredDb } from "@/lib/plant-cache";
 
 export function DemoReset() {
   const router = useRouter();
+  const { canEdit } = useEditAccess();
   const [busy, setBusy] = useState(false);
 
   async function reset() {
@@ -14,7 +17,7 @@ export function DemoReset() {
     try {
       const res = await fetch("/api/reset", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...editHeaders() },
         body: JSON.stringify({ clientState: readStoredDb() }),
       });
       const json = await res.json().catch(() => ({}));
@@ -33,7 +36,7 @@ export function DemoReset() {
     <button
       type="button"
       onClick={reset}
-      disabled={busy}
+      disabled={busy || !canEdit}
       data-tour="reset"
       className="mt-2 w-full rounded-lg border border-slate-700 px-2 py-1.5 text-left text-xs text-slate-400 hover:border-slate-500 hover:text-slate-200 disabled:opacity-50"
     >

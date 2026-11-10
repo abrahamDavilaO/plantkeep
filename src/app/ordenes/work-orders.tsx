@@ -6,6 +6,7 @@ import { Badge, Card, Loading, PageHeader } from "@/components/ui";
 import { CATEGORY_LABEL, PRIORITY_LABEL, PRIORITY_STYLE, STATUS_LABEL, STATUS_STYLE } from "@/lib/labels";
 import { downtimeMs, formatDateTime, formatDuration, repairMs, responseMs } from "@/lib/metrics";
 import type { WorkOrder, WorkOrderStatus } from "@/lib/types";
+import { ReadOnlyNote, useEditAccess } from "@/components/edit-access";
 import { downloadCsv, workOrdersToCsv } from "@/lib/export-csv";
 import { api, usePlant, type PlantState } from "@/lib/use-plant";
 
@@ -199,6 +200,7 @@ export function WorkOrders({ initialOrderId }: { initialOrderId: string | null }
 }
 
 function OrderDetail({ wo, data, onChange }: { wo: WorkOrder; data: PlantState; onChange: () => void }) {
+  const { canEdit } = useEditAccess();
   const [technicianId, setTechnicianId] = useState(wo.technicianId ?? "");
   const [resolution, setResolution] = useState("");
   const [partsUsed, setPartsUsed] = useState("");
@@ -272,6 +274,7 @@ function OrderDetail({ wo, data, onChange }: { wo: WorkOrder; data: PlantState; 
 
       {wo.status !== "completada" && (
         <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
+          <ReadOnlyNote />
           <label className="block text-sm">
             <span className="font-medium text-slate-700">Responsable</span>
             <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -289,7 +292,7 @@ function OrderDetail({ wo, data, onChange }: { wo: WorkOrder; data: PlantState; 
               </select>
               <button
                 type="button"
-                disabled={busy || !technicianId || technicianId === wo.technicianId}
+                disabled={!canEdit || busy || !technicianId || technicianId === wo.technicianId}
                 onClick={() => act({ action: "assign", technicianId })}
                 className="w-full shrink-0 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:bg-slate-300 sm:w-auto sm:min-w-[6.5rem]"
               >
@@ -300,7 +303,7 @@ function OrderDetail({ wo, data, onChange }: { wo: WorkOrder; data: PlantState; 
 
           {wo.status === "asignada" && (
             <button
-              disabled={busy}
+              disabled={!canEdit || busy}
               onClick={() => act({ action: "start" })}
               className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:bg-slate-300"
             >
@@ -324,7 +327,7 @@ function OrderDetail({ wo, data, onChange }: { wo: WorkOrder; data: PlantState; 
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
               <button
-                disabled={busy || !resolution.trim()}
+                disabled={!canEdit || busy || !resolution.trim()}
                 onClick={() => act({ action: "complete", resolution, partsUsed })}
                 className="w-full rounded-lg bg-emerald-600 py-2.5 font-medium text-white hover:bg-emerald-700 disabled:bg-slate-300"
               >

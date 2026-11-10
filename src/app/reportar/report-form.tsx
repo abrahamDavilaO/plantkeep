@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { ReadOnlyNote, useEditAccess } from "@/components/edit-access";
 import { Loading, PageHeader } from "@/components/ui";
 import { CATEGORY_LABEL, PRIORITY_LABEL } from "@/lib/labels";
 import { machineStatus } from "@/lib/metrics";
@@ -19,6 +20,7 @@ const REPORTER_KEY = "plantkeep.reporter";
 
 export function ReportForm() {
   const { data, error, refresh } = usePlant(30_000);
+  const { canEdit } = useEditAccess();
   const [line, setLine] = useState<string>("");
   const [query, setQuery] = useState("");
   const [machineId, setMachineId] = useState("");
@@ -240,9 +242,10 @@ export function ReportForm() {
           )}
           {submitError && <span className="block text-red-600">{submitError}</span>}
         </p>
+        <ReadOnlyNote />
         <button
           onClick={submit}
-          disabled={!canSubmit}
+          disabled={!canEdit || !canSubmit}
           className="rounded-xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           {submitting ? "Enviando…" : "Enviar reporte"}

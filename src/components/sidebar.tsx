@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertBell } from "./alert-bell";
 import { DemoReset } from "./demo-reset";
+import { EditUnlock } from "./edit-access";
 import { openTour } from "./guided-tour";
 
 const NAV = [
@@ -74,9 +75,13 @@ export function Sidebar() {
           Recorrido
         </button>
       </nav>
+      <div className="px-3 pb-3 md:hidden">
+        <EditUnlock />
+      </div>
       <div className="mt-auto hidden px-5 py-4 text-xs text-slate-500 md:block">
         200 equipos · 6 líneas
         <p className="mt-1 text-slate-500">Los cambios se guardan en este navegador.</p>
+        <EditUnlock />
         <DemoReset />
       </div>
     </aside>
